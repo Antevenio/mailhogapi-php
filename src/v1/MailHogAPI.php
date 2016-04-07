@@ -48,7 +48,7 @@ class MailHogAPI {
      * @return FALSE|Email
      */
     public function getLastEmail() {
-        return reset($this->getAllEmails());
+        return $this->getAllEmails()[0];
     }
 
 
