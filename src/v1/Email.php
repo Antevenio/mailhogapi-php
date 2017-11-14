@@ -6,189 +6,203 @@ use stdClass;
 
 class Email {
 
-	protected $email;
+    protected $email;
 
-	/**
-	 * MailHogEmail constructor.
-	 *
-	 * @param $email
-	 */
-	public function __construct(stdClass $email) {
-		$this->email = $email;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getId() {
-		return $this->email->ID;
-	}
-
-	/**
-	 * @return array();
-	 */
-	public function getFromEmailAddresses() {
-		return $this->getHeader('From');
-	}
-
-	/**
-	 * @return array();
-	 */
-	public function getToEmailAddresses() {
-		return $this->getHeader('To');
-	}
-
-	/**
-	 * @return array();
-	 */
-	public function getCcEmailAddresses() {
-		return $this->getHeader('Cc')[0];
+    /**
+     * MailHogEmail constructor.
+     *
+     * @param $email
+     */
+    public function __construct(stdClass $email) {
+        $this->email = $email;
     }
 
-	/**
-	 * 
-	 * @return int
-	 */
-	public function getTotalRecipients() {
-		return count($this->email->To);
-	}
+    /**
+     * @return string
+     */
+    public function getId() {
+        return $this->email->ID;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getReplyToEmailAddress() {
-		return $this->getHeader('Reply-To');
-	}
+    /**
+     * @return array();
+     */
+    public function getFromEmailAddresses() {
+        return $this->getHeader('From');
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getReturnPathEmailAddress() {
+    /**
+     * @return array();
+     */
+    public function getToEmailAddresses() {
+        return $this->getHeader('To');
+    }
 
-		return $this->getHeader('Return-Path');
-	}
+    /**
+     * @return array();
+     */
+    public function getCcEmailAddresses() {
+        return $this->getHeader('Cc')[0];
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getSubject() {
-		return $this->getHeader('Subject')[0];
-	}
+    /**
+     *
+     * @return int
+     */
+    public function getTotalRecipients() {
+        return count($this->email->To);
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getHeader($name) {
-		return $this->email->Content->Headers->{$name};
-	}
+    /**
+     * @return string
+     */
+    public function getReplyToEmailAddress() {
+        return $this->getHeader('Reply-To');
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getContentType() {
-		return $this->getHeader('Content-Type')[0];
-	}
+    /**
+     * @return string
+     */
+    public function getReturnPathEmailAddress() {
 
-	/**
-	 * @return string|NULL
-	 */
-	public function getHTMLBody() {
+        return $this->getHeader('Return-Path');
+    }
 
-		if ($this->getContentType() === 'text/html') {
-			return $this->email->Content->Body;
-		}
+    /**
+     * @return string
+     */
+    public function getSubject() {
+        return $this->getHeader('Subject')[0];
+    }
 
-		$parts = $this->email->MIME->Parts;
-		$part = NULL;
+    /**
+     * @return string
+     */
+    public function getHeader($name) {
+        return $this->email->Content->Headers->{$name};
+    }
 
-		// usually, HTML mime part is located at the 2 array item
-		// check its header to make sure it is an html body
-		if ($this->hasPartHeaderAndValue($parts[2], 'Content-Type', 'html')) {
-			$part = $parts[2];
-		}
+    /**
+     * @return string
+     */
+    public function getContentType() {
+        return $this->getHeader('Content-Type')[0];
+    }
 
-		// if there is no part defined,
-		// try to loop through all parts and find the correct html part
-		if (!$part) {
-			$part = $this->getPartFromPartsByHeaderAndValue('Content-Type', 'html');
-		}
+    /**
+     * @return string|NULL
+     */
+    public function getHTMLBody() {
 
-		// if html part found
-		if ($part) {
-			return $part->Body;
-		}
+        if ($this->getContentType() === 'text/html') {
+            return $this->email->Content->Body;
+        }
 
-		return NULL;
-	}
+        $parts = $this->email->MIME->Parts;
+        $part = NULL;
 
-	/**
-	 * @return string|NULL
-	 */
-	public function getTextBody() {
+        // usually, HTML mime part is located at the 2 array item
+        // check its header to make sure it is an html body
+        if ($this->hasPartHeaderAndValue($parts[2], 'Content-Type', 'html')) {
+            $part = $parts[2];
+        }
 
-		if ($this->getContentType() === 'text/plain') {
-			return $this->email->Content->Body;
-		}
+        // if there is no part defined,
+        // try to loop through all parts and find the correct html part
+        if (!$part) {
+            $part = $this->getPartFromPartsByHeaderAndValue('Content-Type', 'html');
+        }
 
-		$parts = $this->email->MIME->Parts;
-		$part = NULL;
+        // if html part found
+        if ($part) {
+            return $part->Body;
+        }
 
-		// usually, Text mime part is located at the 1 array item
-		// check its header to make sure it is an txt body
-		if ($this->hasPartHeaderAndValue($parts[1], 'Content-Type', 'plain')) {
-			$part = $parts[1];
-		}
-		
-		// if there is no part defined,
-		// try to loop through all parts and find the correct html part
-		if (!$part) {
-			$part = $this->getPartFromPartsByHeaderAndValue('Content-Type', 'plain');
-		}
+        return NULL;
+    }
 
-		// if html part found
-		if ($part) {
-			return $part->Body;
-		}
+    /**
+     * @return string|NULL
+     */
+    public function getTextBody() {
 
-		return NULL;
-	}
+        if ($this->getContentType() === 'text/plain') {
+            return $this->email->Content->Body;
+        }
 
-	/**
-	 * 
-	 * @param string $header
-	 * @param string $value
-	 * 
-	 * @return stdClass|NULL
-	 */
-	public function getPartFromPartsByHeaderAndValue($header, $value) {
-		$parts = $this->email->MIME->Parts;
-		$part = NULL;
-		foreach ($parts as $_part) {
-			if ($this->hasPartHeaderAndValue($_part, $header, $value)) {
-				$part = $_part;
-				break;
-			}
-		}
-		return $part;
-	}
+        $parts = $this->email->MIME->Parts;
+        $part = NULL;
 
-	/**
-	 * 
-	 * @param stdClass $part
-	 * @param string $header
-	 * @param string $value
-	 * 
-	 * @return boolean
-	 */
-	private function hasPartHeaderAndValue($part, $header, $value) {
-		if (!empty($part->Headers->{$header})) {
-			foreach ($part->Headers->{$header} as $header_line) {
-				if (FALSE !== strpos($header_line, $value)) {
-					return TRUE;
-				}
-			}
-		}
-		return FALSE;
-	}
+        // usually, Text mime part is located at the 1 array item
+        // check its header to make sure it is an txt body
+        if ($this->hasPartHeaderAndValue($parts[1], 'Content-Type', 'plain')) {
+            $part = $parts[1];
+        }
+
+        // if there is no part defined,
+        // try to loop through all parts and find the correct html part
+        if (!$part) {
+            $part = $this->getPartFromPartsByHeaderAndValue('Content-Type', 'plain');
+        }
+
+        // if html part found
+        if ($part) {
+            return $part->Body;
+        }
+
+        return NULL;
+    }
+
+    /**
+     *
+     * @param string $header
+     * @param string $value
+     *
+     * @return stdClass|NULL
+     */
+    public function getPartFromPartsByHeaderAndValue($header, $value) {
+        $parts = $this->email->MIME->Parts;
+        return $this->getPartByPartsAndHeaderAndValue($parts, $header, $value);
+    }
+
+    private function getPartByPartsAndHeaderAndValue($parts, $header, $value) {
+        foreach ($parts as $part) {
+            $result = $this->getPartByPartAndHeaderAndValue($part, $header, $value);
+            if ($result) {
+                return $result;
+            }
+        }
+    }
+
+    private function getPartByPartAndHeaderAndValue($part, $header, $value) {
+        if (isset($part->MIME)) {
+            $alternativePath = $this->getPartByPartsAndHeaderAndValue($part->MIME->Parts, $header, $value);
+            if ($alternativePath) {
+                return $alternativePath;
+            }
+        }
+        if ($this->hasPartHeaderAndValue($part, $header, $value)) {
+            return $part;
+        }
+    }
+
+    /**
+     *
+     * @param stdClass $part
+     * @param string $header
+     * @param string $value
+     *
+     * @return boolean
+     */
+    private function hasPartHeaderAndValue($part, $header, $value) {
+        if (!empty($part->Headers->{$header})) {
+            foreach ($part->Headers->{$header} as $header_line) {
+                if (FALSE !== strpos($header_line, $value)) {
+                    return TRUE;
+                }
+            }
+        }
+        return FALSE;
+    }
 
 }
